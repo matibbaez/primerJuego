@@ -6,7 +6,25 @@ from random import randint, randrange
 from pygame import display, time, draw, event
  
 def detectar_colision(rec_1, rec_2):
-    pass
+    colision = False
+    if (
+        punto_en_rectangulo(rec_1.topleft, rec_2) or
+        punto_en_rectangulo(rec_1.topright, rec_2) or
+        punto_en_rectangulo(rec_1.bottomleft, rec_2) or
+        punto_en_rectangulo(rec_1.bottomright, rec_2) or
+        punto_en_rectangulo(rec_2.topleft, rec_1) or
+        punto_en_rectangulo(rec_2.topright, rec_1) or
+        punto_en_rectangulo(rec_2.bottomleft, rec_1) or
+        punto_en_rectangulo(rec_2.bottomright, rec_1)
+    ):
+        return True
+    else:
+        return False
+
+def punto_en_rectangulo(punto, rect):
+    x, y = punto
+    return x >= rect.left and x <= rect.right and y >= rect.top and y <= rect.bottom
+
 
 def crear_bloque(left=0, top=0, ancho=50, alto=50, color=(255, 255, 255), dir=3, borde=0, radio=-1, speed_x=5, speed_y=5):
     rec = pygame.Rect(left, top, ancho, alto)
@@ -42,15 +60,15 @@ DL = 1
 # ---> Up Left
 UL = 7
 
-BLOCK_WIDTH = 50
-BLOCK_HEIGHT = 50
+BLOCK_WIDTH = 100
+BLOCK_HEIGHT = 100
 speed_x = 5
 speed_y = 5 
 
 # Creo el rectangulo
 blocks = []
 
-for i in range(3):
+for i in range(2):
     blocks.append(crear_bloque(randint(0, width - BLOCK_WIDTH), randint(0, height - BLOCK_WIDTH), randint(20, BLOCK_WIDTH), randint(20, BLOCK_HEIGHT), color_aleatorio()))
 
 # blocks = [
@@ -65,7 +83,6 @@ is_running = True
 
 while is_running:
     clock.tick(FPS)
-    print(speed_x, speed_y)
     # ---> Detectar los eventos
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -80,7 +97,7 @@ while is_running:
                 block["dir"] = DL
             elif block["dir"] == UR:
                 block["dir"] = UL
-            block["color"] = color_aleatorio()
+            # block["color"] = color_aleatorio()
             block["borde"] = randrange(20)
             block["speed_x"] = randint(1, 10)
         # Cuando choco con el lateral izquierdo
@@ -89,7 +106,7 @@ while is_running:
                 block["dir"] = DR
             elif block["dir"] == UL:
                 block["dir"] = UR
-            block["color"] = color_aleatorio()
+            # block["color"] = color_aleatorio()
             block["radio"] = randrange(25)
             block["speed_x"] = randint(1, 10)
         # Cuando choco con la parte inferior
@@ -98,7 +115,7 @@ while is_running:
                 block["dir"] = UR
             elif block["dir"] == DL:
                 block["dir"] = UL
-            block["color"] = color_aleatorio()
+            # block["color"] = color_aleatorio()
             block["speed_y"] = randint(1, 10)
         # Cuando choco con la parte superior
         elif block["rect"].top <= 0:
@@ -106,7 +123,7 @@ while is_running:
                 block["dir"] = DR
             elif block["dir"] == UL:
                 block["dir"] = DL
-            block["color"] = color_aleatorio()
+            # block["color"] = color_aleatorio()
             block["speed_y"] = randint(1, 10)
             
     # Movimiento del bloque de acuerdo a su direccion
@@ -124,6 +141,10 @@ while is_running:
             block["rect"].left += speed_x
             block["rect"].top -= speed_y
     
+    if detectar_colision(blocks[0]["rect"], blocks[1]["rect"]):
+        print("COLISION")
+        for block in blocks:
+            block["color"] = color_aleatorio()
     # ---> Dibujar pantalla
     screen.fill(BLACK)
     for block in blocks:

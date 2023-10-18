@@ -5,6 +5,7 @@ GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 CUSTOM = (169, 222, 206)
 ORANGE = (255, 201, 14)
+YELLOW = (255, 242, 0)
 BLACK = (0, 0, 0)
 
 colours = [WHITE, RED, GREEN, BLUE, CUSTOM, ORANGE]
