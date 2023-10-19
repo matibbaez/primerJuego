@@ -16,6 +16,22 @@ FPS = 60
 # Lo que se mueve en cada ventana
 SPEED = 5
 
+# Direcciones
+# ---> Up right
+UR = 9
+# ---> Down Right
+DR = 3
+# ---> Down Left
+DL = 1
+# ---> Up Left
+UL = 7
+
+BLOCK_WIDTH = 40
+BLOCK_HEIGHT = 40
+speed_x = 5
+speed_y = 5 
+size_coin = 30
+
 # Size screen
 width = 800
 height = 600
