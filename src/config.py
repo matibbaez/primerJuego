@@ -30,7 +30,11 @@ BLOCK_WIDTH = 40
 BLOCK_HEIGHT = 40
 speed_x = 5
 speed_y = 5 
+
+# Coins
 size_coin = 30
+size_min_coin = 20
+size_max_coin = 40
 
 # Size screen
 width = 800
