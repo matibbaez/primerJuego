@@ -7,17 +7,48 @@ from pygame import display, time, draw, event
 from colisones import *
 from pygame.locals import *
 
-def crear_bloque(imagen, left=0, top=0, ancho=50, alto=50, color=(255, 255, 255), dir=3, borde=0, radio=-1, speed_x=5, speed_y=5):
+def terminar():
+    pygame.quit()
+    exit()
+
+def mostrar_texto(superficie, texto, fuente, coordenadas, color_fuente, color_fondo):
+    sup_texto = fuente.render(texto, True, color_fuente, color_fondo)
+    rect_texto = sup_texto.get_rect()
+    rect_texto.center = coordenadas
+    superficie.blit(sup_texto, rect_texto)
+    pygame.display.flip()
+
+def wait_user():
+    while True:
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                terminar()
+    
+            if event.type == KEYDOWN:
+                if event.key == K_ESCAPE:
+                    terminar()
+                return
+
+def crear_bloque(imagen = None, left=0, top=0, ancho=50, alto=50, color=(255, 255, 255), dir=3, borde=0, radio=-1, speed_x=5, speed_y=5):
     rec = pygame.Rect(left, top, ancho, alto)
-    return {"rect": rec, "color": color, "dir": dir, "borde": borde, "radio": radio, "speed_x": speed_x, "speed_y": speed_y, "img": imagen}
+    if imagen:
+        imagen = pygame.transform.scale(imagen, (ancho, alto))
+    return {"rect": rec, "color": color, "dir": dir, "borde": borde, "radio": radio, "speed_x": speed_x, "speed_y": speed_y, "imagen": imagen}
 
 def handler_new_coin():
-    coins.append(crear_bloque(randint(0, width - size_coin), randint(0, height - size_coin), size_coin, size_coin, CUSTOM, radio = size_coin // 2))
+    coins.append(crear_bloque(None, randint(0, width - size_coin), randint(0, height - size_coin), size_coin, size_coin, CUSTOM, radio = size_coin // 2))
     
-def load_coins_list(coins, cantidad):
+def load_coins_list(coins, cantidad, imagen = None):
     for i in range(cantidad):
         size_coin = randint(size_min_coin, size_max_coin)
-        coins.append(crear_bloque(randint(0, width - size_coin), randint(0, height - size_coin), size_coin, size_coin, YELLOW, radio = size_coin // 2))
+        coins.append(crear_bloque(imagen, randint(0, width - size_coin), randint(0, height - size_coin), size_coin, size_coin, YELLOW, radio = size_coin // 2))
+        
+def dibujar_asteroides(superficie, coins):
+    for coin in coins:
+        if coin["imagen"]:
+            superficie.blit(coin["imagen"], coin["rect"])
+        else:
+            draw.rect(superficie, coin["color"], coin["rect"], coin["borde"], coin["radio"])
 
 # Inicializar todos los modulos
 pygame.init()
@@ -49,6 +80,10 @@ playing_music = True
 
 # Cargo imagenes
 image_player = pygame.image.load("./src/assets/ovni.png")
+image_asteroid = pygame.image.load("./src/assets/asteroide.png")
+image_asteroid_2 = pygame.image.load("./src/assets/asteroide-2.png")
+image_asteroid_3 = pygame.image.load("./src/assets/asteroide-3.png")
+background = pygame.transform.scale(pygame.image.load("./src/assets/background-b1.jpg"), size_screen)
 
 # Evento personalizado
 
@@ -68,16 +103,16 @@ move_left = False
 # Fuente
 fuente = pygame.font.SysFont(None, 48)
 
-texto = fuente.render(f"Coins: {contador}", True, CUSTOM, BLACK)
+texto = fuente.render(f"Coins: {contador}", True, CUSTOM)
 rect_texto = texto.get_rect()
 rect_texto.midtop = (width // 2, 30)   
 
 # Creo el rectangulo
-block = crear_bloque(randint(0, width - BLOCK_WIDTH), randint(0, height - BLOCK_WIDTH), BLOCK_WIDTH, BLOCK_HEIGHT, RED, radio= 25)
+block = crear_bloque(image_player, randint(0, width - BLOCK_WIDTH), randint(0, height - BLOCK_WIDTH), BLOCK_WIDTH, BLOCK_HEIGHT, RED, radio= 25)
 
 # Crear lista de coins
 coins = []
-load_coins_list(coins, count_coins)
+load_coins_list(coins, count_coins, image_asteroid)
 
 # Variable de control
 is_running = True
@@ -104,12 +139,24 @@ while is_running:
             if event.key == K_DOWN or event.key == K_s:
                 move_down = True
                 move_up = False
+                
             if event.key == K_m:
                 if playing_music:
                     pygame.mixer.music.pause()
                 else:                        
                     pygame.mixer.music.unpause()
                 playing_music = not playing_music
+                
+            # Pausa juego
+            
+            if event.key == K_p:
+                if playing_music:
+                    pygame.mixer.music.pause()
+                mostrar_texto(screen, "Pausa", fuente, center_screen, CUSTOM, BLACK)
+                wait_user()
+                if playing_music:
+                    pygame.mixer.music.unpause()
+
             
         if event.type == KEYUP:
             if event.key == K_RIGHT or event.key == K_d:
@@ -127,7 +174,7 @@ while is_running:
                         
         if event.type == MOUSEBUTTONDOWN:
             if event.button == 1:
-                new_coin = crear_bloque(event.pos[0], event.pos[1], size_coin, size_coin, WHITE, radio = size_coin // 2)
+                new_coin = crear_bloque(None, event.pos[0], event.pos[1], size_coin, size_coin, WHITE, radio = size_coin // 2)
                 new_coin["rect"].left -= size_coin // 2
                 new_coin["rect"].top -= size_coin // 2
                 coins.append(new_coin)
@@ -162,7 +209,7 @@ while is_running:
                 coin_sound.play()
             
             if len(coins) == 0:
-                load_coins_list(coins, count_coins)
+                load_coins_list(coins, count_coins, image_asteroid_2)
                 if playing_music:
                     coin_sound.play()
             
@@ -177,17 +224,16 @@ while is_running:
         block["color"] = RED
         
     # ---> Dibujar pantalla
-    screen.fill(BLACK)
+    # screen.fill(BLACK)
+    screen.blit(background, origin)
     
-    for coin in coins:
-        draw.rect(screen, coin["color"], coin["rect"], coin["borde"], coin["radio"])
-    
-    draw.rect(screen, block["color"], block["rect"], block["borde"], block["radio"])
+    dibujar_asteroides(screen, coins)
+            
+    screen.blit(block["imagen"], block["rect"])
     
     screen.blit(texto, rect_texto)
     
     # ---> Actualizar pantalla, puede ser flip o update()
     pygame.display.flip()
             
-pygame.quit()
-sys.exit()
+terminar()

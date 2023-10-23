@@ -26,8 +26,8 @@ DL = 1
 # ---> Up Left
 UL = 7
 
-BLOCK_WIDTH = 40
-BLOCK_HEIGHT = 40
+BLOCK_WIDTH = 60
+BLOCK_HEIGHT = 60
 speed_x = 5
 speed_y = 5 
 
@@ -42,5 +42,6 @@ height = 600
 size_screen = (width, height)
 center_screen = (width // 2, height // 2)
 top_right = (width, 0)
+origin = (0, 0)
 
 pos_y = (200, 0)
