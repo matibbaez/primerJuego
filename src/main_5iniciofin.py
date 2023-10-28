@@ -224,6 +224,8 @@ while True:
             block["rect"].top += SPEED
             
         pygame.mouse.set_pos(block["rect"].centerx, block["rect"].centery)
+
+        
             
         for coin in coins[ : ]:
             if detectar_colision_circ(coin["rect"], block["rect"]):

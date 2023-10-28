@@ -35,12 +35,13 @@ def crear_bloque(imagen = None, left=0, top=0, ancho=50, alto=50, color=(255, 25
     return {"rect": rec, "color": color, "dir": dir, "borde": borde, "radio": radio, "speed_x": speed_x, "speed_y": speed_y, "imagen": imagen}
 
 def handler_new_coin():
-    coins.append(crear_bloque(None, randint(0, width - size_coin), randint(0, height - size_coin), size_coin, size_coin, CUSTOM, radio = size_coin // 2))
+    coins.append(crear_bloque(None, randint(0, width - size_coin), randint(0, height - size_coin), size_coin, size_coin, CUSTOM,radio = size_coin // 2))
     
 def load_coins_list(coins, cantidad, imagen = None):
     for i in range(cantidad):
         size_coin = randint(size_min_coin, size_max_coin)
-        coins.append(crear_bloque(imagen, randint(0, width - size_coin), randint(0, height - size_coin), size_coin, size_coin, YELLOW, radio = size_coin // 2))
+        speed_coin = randint(speed_min_coin, speed_max_coin)
+        coins.append(crear_bloque(imagen, randint(0, width - size_coin), randint(-height, -size_coin), size_coin, size_coin, YELLOW, speed_y= speed_coin, radio = size_coin // 2))
         
 def dibujar_asteroides(superficie, coins):
     for coin in coins:
@@ -100,6 +101,8 @@ move_down = False
 move_left = False
 contador = 0
 
+laser = None
+
 # Fuente
 fuente = pygame.font.SysFont(None, 48)
 
@@ -114,6 +117,8 @@ block = crear_bloque(image_player, randint(0, width - BLOCK_WIDTH), randint(0, h
 # coins = []
 # load_coins_list(coins, count_coins, image_asteroid)
 
+
+
 # Variable de control
 is_running = True
 
@@ -125,13 +130,18 @@ wait_user()
 
 pygame.mouse.set_visible(False)
 
+# Trucos
+
+trick_reverse = False
+trick_slow = False
+
 while True:
     
     contador = 0
     texto = fuente.render(f"Coins: {contador}", True, CUSTOM)
     rect_texto = texto.get_rect()
     rect_texto.midtop = (width // 2, 30)   
-    tiempo_juego = FPS * 10
+    tiempo_juego = FPS * 30
     is_running = True
     pygame.mixer.music.play(-1) 
     
@@ -140,15 +150,22 @@ while True:
       
     while is_running:
         clock.tick(FPS)
-        print(len(coins))
+        tiempo_juego -= 1
         # ---> Detectar los eventos
         for event in pygame.event.get():
             if event.type == QUIT:
                 is_running = False   
             if event.type == EVENT_NEW_COIN:
-                handler_new_coin()
+                # handler_new_coin()
+                pass
                 
             if event.type == KEYDOWN:
+                if event.key == K_f:
+                    if not laser:
+                        midtop = block["rect"].midtop
+                        laser_w, laser_h = size_laser
+                        laser = crear_bloque(None, midtop[0] - laser_w // 2, midtop[1] - laser_h, laser_w, laser_h, RED, speed_y=speed_laser)
+                    
                 if event.key == K_RIGHT or event.key == K_d:
                     move_right = True
                     move_left = False
@@ -161,7 +178,12 @@ while True:
                 if event.key == K_DOWN or event.key == K_s:
                     move_down = True
                     move_up = False
-                    
+                
+                if event.key == K_r:
+                    trick_reverse = True    
+                if event.key == K_l:
+                    trick_slow = True  
+                
                 if event.key == K_m:
                     if playing_music:
                         pygame.mixer.music.pause()
@@ -190,6 +212,11 @@ while True:
                     move_up = False
                 if event.key == K_DOWN or event.key == K_s:
                     move_down = False
+                
+                if event.key == K_r:
+                    trick_reverse = False    
+                if event.key == K_l:
+                    trick_slow = False  
                 
                 # Para cerrar el juego con ESC
                 if event.key == K_ESCAPE:
@@ -225,14 +252,38 @@ while True:
             
         pygame.mouse.set_pos(block["rect"].centerx, block["rect"].centery)
             
+        # Movemos los asteroides
+        
+        for coin in coins:
+            # if not trick_reverse and not trick_slow:
+            # if trick_reverse == False and trick_slow == False:
+            if not (trick_reverse or trick_slow):
+                coin["rect"].move_ip(0, coin["speed_y"])
+            elif trick_reverse:
+                coin["rect"].move_ip(0, -coin["speed_y"])
+            elif trick_slow:
+                coin["rect"].move_ip(0, 1)
+                
+        # Movemos el laser
+        
+        if laser:
+            if laser["rect"].bottom >= 0:
+                laser["rect"].move_ip(0, - laser["speed_y"])
+            else:
+                laser = None
+            
+        for coin in coins:
+            if coin["rect"].top > height:
+                coin["rect"].move_ip(0, - (height + coin["rect"].height))
+        
+        for coin in coins[:]:
+            if coin["rect"].top > height:
+                coins.remove(coin)
+                
         for coin in coins[ : ]:
             if detectar_colision_circ(coin["rect"], block["rect"]):
                 coins.remove(coin)
-                contador += 1
-                texto = fuente.render(f"Coins: {contador}", True, CUSTOM, BLACK)
-                rect_texto = texto.get_rect()
-                rect_texto.midtop = (width // 2, 30)      
-                cont_grande = 10
+                is_running = False    
                 if playing_music:
                     coin_sound.play()
                 
@@ -240,6 +291,26 @@ while True:
                     load_coins_list(coins, count_coins, image_asteroid_2)
                     if playing_music:
                         coin_sound.play()
+         
+        if laser:   
+            colision = False    
+            for coin in coins[ : ]:
+                if detectar_colision_circ(coin["rect"], laser["rect"]):
+                    coins.remove(coin)
+                    contador += 1
+                    texto = fuente.render(f"Coins: {contador}", True, CUSTOM, BLACK)
+                    rect_texto = texto.get_rect()
+                    rect_texto.midtop = (width // 2, 30)      
+                    cont_grande = 10
+                    colision = True
+                    if playing_music:
+                        coin_sound.play()
+                    if len(coins) == 0:
+                        load_coins_list(coins, count_coins, image_asteroid_2)
+                        if playing_music:
+                            coin_sound.play()
+            if colision == True:
+                laser = None
                 
         if cont_grande > 0:
             cont_grande -= 1
@@ -256,6 +327,11 @@ while True:
         screen.blit(background, origin)
         
         dibujar_asteroides(screen, coins)
+        
+        
+        # Dibujo laser
+        if laser:
+            pygame.draw.rect(screen, laser["color"], laser["rect"])
                 
         screen.blit(block["imagen"], block["rect"])
         

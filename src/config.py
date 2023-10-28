@@ -36,6 +36,13 @@ size_coin = 30
 size_min_coin = 20
 size_max_coin = 40
 
+# Speed coins
+speed_min_coin = 1
+speed_max_coin = 7
+
+size_laser = (6, 20)
+speed_laser = 6
+
 # Size screen
 width = 800
 height = 600
